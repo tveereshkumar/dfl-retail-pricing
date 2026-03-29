@@ -13,6 +13,15 @@ from optimization.pricing_problem import RetailPricingProblem
 from optimization.solver import run_optimization
 
 
+# 🔥 HARD CPI ENFORCEMENT (GLOBAL)
+def enforce_cpi_iterative(prices, competitor_prices, weights, iters=5, target=1.03):
+    for _ in range(iters):
+        cpi = (weights * prices).sum() / (weights * competitor_prices).sum()
+        scale = target / (cpi + 1e-6)
+        prices = prices * scale
+    return prices, cpi
+
+
 def main():
 
     print("🔹 Generating data...")
@@ -25,7 +34,7 @@ def main():
     thresholds = torch.tensor(data["thresholds"]).float()
 
     print("🔹 Initializing TFT model...")
-    input_size = base_features.shape[1] + 2  # base + price + promo
+    input_size = base_features.shape[1] + 2
     model = TFTDemandModel(input_size=input_size)
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -42,22 +51,32 @@ def main():
         # ---- Pass 1 ----
         features = build_features(base_features, dummy_prices, dummy_promos)
         demand = model(features.unsqueeze(1)).squeeze()
-        demand = demand * 100
 
         # ---- Pricing ----
-        prices_t = pricing_layer.forward(
-            demand,
-            costs,
+        prices_t = pricing_layer.forward(demand, costs)
+
+        # 🔥 HARD CPI FIX
+        prices_t, cpi = enforce_cpi_iterative(
+            prices_t,
             competitor_prices,
             weights
         )
 
-        # ---- Promotions (learnable proxy) ----
-        promos_t = torch.sigmoid(demand - thresholds)
+        # ---- Promotions ----
+        promos_t = torch.sigmoid(0.1 * (thresholds - demand))
 
         # ---- Pass 2 ----
         features = build_features(base_features, prices_t, promos_t)
         demand = model(features.unsqueeze(1)).squeeze()
+
+        # ---- Elasticity ----
+        demand = demand * torch.exp(-0.05 * prices_t)
+
+        # ---- Margin awareness ----
+        demand = demand * torch.sigmoid(prices_t - costs)
+
+        # ---- Clamp demand (stability) ----
+        demand = torch.clamp(demand, 0, 200)
 
         # ---- Vendor ----
         allowance = compute_vendor_allowance(
@@ -67,11 +86,6 @@ def main():
             thresholds
         )
 
-        # ---- CPI ----
-        cpi = (weights * prices_t).sum() / (weights * competitor_prices).sum()
-
-        cpi_penalty = torch.relu(1.00 - cpi) + torch.relu(cpi - 1.07)
-
         # ---- Profit ----
         profit = compute_profit(
             prices_t,
@@ -79,25 +93,21 @@ def main():
             costs,
             allowance,
             markdowns=0
-        ) / 100.0
+        )
 
-        # ✅ FINAL LOSS (multi-objective)
-        cpi_violation = torch.relu(cpi - 1.07) + torch.relu(1.00 - cpi)
-        # 🔥 Barrier-style penalty
-        loss = -profit + 50 * (cpi_violation ** 2)
+        loss = -profit  # CPI already enforced
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+        final_cpi = (weights * prices_t).sum() / (weights * competitor_prices).sum()
         print(
             f"Epoch {epoch+1} | Profit: {profit.item():.2f} | "
-            f"CPI: {cpi.item():.3f} | Price Avg: {prices_t.mean().item():.2f}"
+            f"CPI: {final_cpi.item():.3f} | Price Avg: {prices_t.mean().item():.2f}"
         )
 
-    # --------------------------------------------------
-    # FINAL (use PyMOO for discrete optimal solution)
-    # --------------------------------------------------
+    # ---------------- FINAL DISCRETE OPT ----------------
 
     print("\n✅ Final Optimization Run...")
 
@@ -107,7 +117,7 @@ def main():
         costs=costs,
         competitor_prices=competitor_prices,
         weights=weights,
-        thresholds=thresholds.numpy(),  # PyMOO expects numpy
+        thresholds=thresholds.numpy(),
         price_options=price_options
     )
 
