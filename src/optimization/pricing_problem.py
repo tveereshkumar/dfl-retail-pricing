@@ -55,6 +55,7 @@ class RetailPricingProblem(Problem):
 
             with torch.no_grad():
                 demand = self.tft_model(features).squeeze().numpy()
+                demand = demand * 100
 
             allowance = compute_vendor_allowance(
                 demand, prices, promos, self.thresholds

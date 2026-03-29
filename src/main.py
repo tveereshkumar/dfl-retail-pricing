@@ -42,13 +42,14 @@ def main():
         # ---- Pass 1 ----
         features = build_features(base_features, dummy_prices, dummy_promos)
         demand = model(features.unsqueeze(1)).squeeze()
+        demand = demand * 100
 
         # ---- Pricing ----
         prices_t = pricing_layer.forward(
             demand,
             costs,
-            weights,
-            competitor_prices
+            competitor_prices,
+            weights
         )
 
         # ---- Promotions (learnable proxy) ----
@@ -57,9 +58,6 @@ def main():
         # ---- Pass 2 ----
         features = build_features(base_features, prices_t, promos_t)
         demand = model(features.unsqueeze(1)).squeeze()
-
-        # ✅ ELASTICITY (CRITICAL FIX)
-        demand = demand * torch.exp(-0.15 * prices_t)
 
         # ---- Vendor ----
         allowance = compute_vendor_allowance(
@@ -81,10 +79,12 @@ def main():
             costs,
             allowance,
             markdowns=0
-        )
+        ) / 100.0
 
         # ✅ FINAL LOSS (multi-objective)
-        loss = -profit + 200 * cpi_penalty
+        cpi_violation = torch.relu(cpi - 1.07) + torch.relu(1.00 - cpi)
+        # 🔥 Barrier-style penalty
+        loss = -profit + 50 * (cpi_violation ** 2)
 
         optimizer.zero_grad()
         loss.backward()
