@@ -3,3 +3,4 @@ pandas
 torch
 ortools
 pymoo
+scikit-learn
