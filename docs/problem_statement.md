@@ -1,30 +1,49 @@
 # Problem Statement
 
-Retail pricing involves balancing:
+Retail pricing is a complex decision-making problem involving multiple competing objectives:
 
-* Profitability
-* Competitive pricing
-* Vendor funding
-* Customer demand
-
-Traditional systems fail because:
-
-* Demand predictions are not aligned with decisions
-* Vendor funding is ignored
-* CPI constraints are not optimized
+* Profit maximization
+* Competitive pricing (CPI)
+* Vendor promotional funding
+* Customer demand sensitivity
 
 ---
 
-## Core Challenge
+## Limitations of Traditional Approach
 
-Maximize:
+Predict-Then-Optimize (PTO):
 
-```text
-Revenue - Cost + Vendor Funding - Penalties
-```
+Predict Demand → Apply Rules
 
-Subject to:
+Challenges:
 
-* CPI constraints
+* Ignores downstream business impact
+* Does not optimize profit directly
+* Fails to incorporate vendor funding and CPI constraints effectively
+
+---
+
+## Objective
+
+Maximize total profit:
+
+Profit = Revenue - Cost + Vendor Funding - CPI Penalty
+
+---
+
+## Constraints
+
 * Inventory limits
+* Competitive pricing constraints (CPI)
 * Vendor agreements
+* One price per SKU
+
+---
+
+## Goal
+
+Build a Decision-Focused Learning system that:
+
+* Integrates demand prediction with optimization
+* Directly optimizes business outcomes
+* Handles real-world retail constraints

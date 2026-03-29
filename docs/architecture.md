@@ -1,10 +1,10 @@
 # System Architecture
 
-## Flow
+## Overview
 
-```text
-Data → ML Model → Demand Prediction → Optimization → Decision
-```
+The system follows a Decision-Focused Learning pipeline:
+
+Data → Deep Learning → Prediction → Optimization → Decision → Simulation → Outcome
 
 ---
 
@@ -12,72 +12,104 @@ Data → ML Model → Demand Prediction → Optimization → Decision
 
 ### 1. Data Layer
 
-* Historical pricing data
+* Synthetic or historical pricing data
+* Features: price, seasonality, promotions
 
-### 2. ML Layer
+---
 
-* Predict demand
+### 2. Deep Learning Layer
 
-### 3. Optimization Layer
+* LSTM-based demand prediction (TFT-inspired)
+* Captures non-linear demand patterns
 
-* Solve constrained problem
+---
 
-### 4. Decision Layer
+### 3. Prediction Layer
 
+* Generates demand estimates for each SKU-price pair
 
-## Architecture Diagram :
-![alt text](image.png)
+---
 
-* Output optimal prices
+### 4. Optimization Layer
 
-                    ┌──────────────────────────┐
-                    │   Historical / Synthetic │
-                    │          Data            │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │   Feature Engineering    │
-                    │ (price, season, promo)   │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │   ML Model (Demand)      │
-                    │ RandomForest / TFT-ready │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │  Demand Predictions      │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-        ┌──────────────────────────────────────────────┐
-        │        Optimization Engine (OR-Tools)        │
-        │----------------------------------------------│
-        │ Objective: Maximize Profit                   │
-        │ Constraints:                                 │
-        │  - Inventory                                 │
-        │  - CPI (penalty)                             │
-        │  - Vendor funding rules                      │
-        └────────────┬─────────────────────────────────┘
-                     │
-                     ▼
-        ┌──────────────────────────┐
-        │   Optimal Price Decision │
-        │   (per SKU)              │
-        └────────────┬─────────────┘
-                     │
-                     ▼
-        ┌──────────────────────────┐
-        │     Simulator Layer      │
-        │ Profit, Demand, Vendor   │
-        └────────────┬─────────────┘
-                     │
-                     ▼
-        ┌──────────────────────────┐
-        │   Business Outcome       │
-        │   (Total Profit)         │
-        └──────────────────────────┘
+#### OR-Tools (Exact Optimization)
 
+* Maximizes profit
+* Enforces constraints:
+
+  * Inventory
+  * One price per SKU
+  * Business rules
+
+#### PyMOO (Multi-objective Optimization)
+
+* Optimizes:
+
+  * Profit
+  * CPI deviation
+* Produces Pareto-optimal solutions
+
+---
+
+### 5. Decision Layer
+
+* Selects optimal pricing strategy per SKU
+
+---
+
+### 6. Simulator Layer
+
+* Evaluates:
+
+  * Profit
+  * Vendor funding
+  * CPI penalties
+
+---
+
+## Architecture Diagram
+
+```
+                ┌──────────────────────────┐
+                │   Data (Synthetic/Real)  │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Feature Engineering      │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Deep Learning Model      │
+                │ (LSTM / TFT-ready)       │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Demand Predictions       │
+                └────────────┬─────────────┘
+                             │
+            ┌────────────────┴────────────────┐
+            ▼                                 ▼
+ ┌──────────────────────┐        ┌──────────────────────┐
+ │ OR-Tools             │        │ PyMOO (NSGA-II)      │
+ │ (Exact Optimization) │        │ (Multi-objective)    │
+ └────────────┬─────────┘        └────────────┬─────────┘
+              │                               │
+              ▼                               ▼
+       ┌──────────────────────────────────────────┐
+       │        Pricing Decisions                 │
+       └────────────┬─────────────────────────────┘
+                    │
+                    ▼
+       ┌──────────────────────────┐
+       │ Simulator                │
+       └────────────┬─────────────┘
+                    │
+                    ▼
+       ┌──────────────────────────┐
+       │ Business Outcome         │
+       │ (Profit)                │
+       └──────────────────────────┘
+```

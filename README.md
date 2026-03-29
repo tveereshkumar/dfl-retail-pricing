@@ -1,103 +1,92 @@
 # Decision-Focused Learning for Retail Pricing Optimization
 
-🚀 Key Result:
-Achieved ~150% improvement in profit by shifting from Predict-Then-Optimize (PTO) to Decision-Focused Learning (DFL) approach.
+🚀 **Key Result:**
+Achieved ~150% improvement in profit by moving from Predict-Then-Optimize (PTO) to a Decision-Focused Learning (DFL) system.
 
-## 📌 Problem Statement
+---
 
-Retail pricing decisions are complex due to:
+## 📌 Problem
 
-* Demand sensitivity to price
-* Vendor promotional funding
-* Competitive Price Index (CPI) constraints
-* Inventory limitations
+Retail pricing decisions must balance:
 
-Traditional approaches:
+* Demand sensitivity
+* Vendor funding
+* Competitive pricing (CPI)
+* Inventory constraints
 
-> Predict demand → Apply rules
-
-❌ Fail to optimize **business outcomes (profit)**
+Traditional systems optimize prediction accuracy, not business outcomes.
 
 ---
 
 ## 🎯 Objective
 
-Build a **Decision-Focused Learning (DFL)** system that:
+Build a system that:
 
-* Predicts demand using ML
+* Predicts demand using Deep Learning
 * Optimizes pricing using constraints
-* Maximizes **total profit**, not just prediction accuracy
+* Maximizes total profit
 
 ---
 
 ## 🧠 Solution Overview
 
-We built an end-to-end system:
-
-```text
-ML Model → Demand Prediction → Optimization Solver → Pricing Decision
-```
+Deep Learning → Demand Prediction → Optimization → Pricing Decision
 
 ---
 
 ## ⚙️ Key Components
 
-### 1. Demand Prediction
+### 1. Deep Learning Model
 
-* Model: RandomForest (proxy for TFT)
-* Features:
-
-  * Price
-  * Seasonality
-  * Promotion flag
+* LSTM-based (TFT-inspired)
+* Captures non-linear demand behavior
 
 ---
 
-### 2. Optimization (OR-Tools)
+### 2. Optimization
 
-* Objective: Maximize profit
-* Constraints:
+#### OR-Tools
 
-  * Inventory
-  * CPI (soft penalty)
-  * Vendor funding rules
+* Exact optimization
+* Produces best pricing decision
+
+#### PyMOO (NSGA-II)
+
+* Multi-objective optimization
+* Explores trade-offs between:
+
+  * Profit
+  * CPI
 
 ---
 
-### 3. Multi-SKU Optimization
+### 3. Simulator
 
-* Joint decision across multiple SKUs
-* Real-world scalable design
+* Evaluates real-world impact:
+
+  * Vendor funding
+  * CPI penalties
+  * Demand elasticity
 
 ---
 
 ## 💰 Profit Function
 
-```text
 Profit = (Price - Cost) × Demand + Vendor - CPI Penalty
-```
-
----
-
-## 🔥 Key Insights
-
-* Highest price ≠ highest profit
-* Lower price → higher demand + vendor funding
-* Optimization finds best trade-off
 
 ---
 
 ## 📊 Results
 
-| Approach    | Profit |
-| ----------- | ------ |
-| PTO         | 4700   |
-| DFL         | 11850  |
-| Improvement | +7150  |
+| Approach | Profit |
+| -------- | ------ |
+| PTO      | 4700   |
+| DFL      | 11850  |
+| Gain     | +150%  |
 
 ---
 
-## 🚀 How to Run
+## 🚀 Run
 
 ```bash
 pip install -r requirements.txt
@@ -106,12 +95,12 @@ python src/main.py
 
 ---
 
-## 🧠 Future Enhancements
+## 🔮 Future Work
 
-* Temporal Fusion Transformer (TFT)
-* Reinforcement Learning
-* Multi-period pricing
-* Real-time pricing APIs
+* Full Temporal Fusion Transformer (TFT)
+* Multi-period optimization
+* Reinforcement learning pricing
+* Real-time deployment APIs
 
 ---
 
